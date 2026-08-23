@@ -142,12 +142,14 @@ final class AppModel {
     /// Le motif n'est pas decoratif : c'est lui qui distingue une mise a l'abri
     /// pour une nuit d'un rangement pour l'hiver, et donc qui decide si
     /// l'application proposera de la ressortir demain matin.
-    func rentrer(_ plante: Plante, motif: Demenagement.Motif = .manuel) {
+    func rentrer(_ plante: Plante,
+                 motif: Demenagement.Motif = .manuel,
+                 temperature: Double? = nil) {
         guard var copie = self.plante(id: plante.id) else { return }
-        let temperature = plan?.aRentrer.first { $0.planteID == plante.id }?
-            .minimum.temperatureCorrigee
+        let releve = temperature
+            ?? plan?.aRentrer.first { $0.planteID == plante.id }?.minimum.temperatureCorrigee
         copie.demenagements.append(Demenagement(sens: .rentree, motif: motif,
-                                                temperature: temperature))
+                                                temperature: releve))
         copie.emplacement = .interieur
         modifier(copie)
     }
@@ -162,9 +164,15 @@ final class AppModel {
     /// Rentre d'un coup tout ce que le plan du soir designe.
     func rentrerTout() {
         guard let plan else { return }
+        // Les temperatures sont relevees avant le premier deplacement : chaque
+        // rentree reconstruit le plan, et les plantes suivantes n'y figureraient
+        // plus au moment ou leur tour arrive.
+        let releves = Dictionary(uniqueKeysWithValues: plan.aRentrer.map {
+            ($0.planteID, $0.minimum.temperatureCorrigee)
+        })
         for evaluation in plan.aRentrer {
             guard let plante = self.plante(id: evaluation.planteID) else { continue }
-            rentrer(plante, motif: .gel)
+            rentrer(plante, motif: .gel, temperature: releves[evaluation.planteID])
         }
     }
 

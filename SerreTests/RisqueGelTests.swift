@@ -57,8 +57,10 @@ struct RisqueGelTests {
 
     @Test("Une marge plus large declenche plus tot")
     func margeElargie() {
-        #expect(evaluer(temperature: 6, marge: 1)?.niveau == .danger)
-        #expect(evaluer(temperature: 6, marge: 3)?.niveau == .critique)
+        // Quatre degres : deja un danger avec la marge par defaut, franchement
+        // critique des qu'on se donne trois degres de securite.
+        #expect(evaluer(temperature: 4, marge: 1)?.niveau == .danger)
+        #expect(evaluer(temperature: 4, marge: 3)?.niveau == .critique)
     }
 
     // MARK: - Seuil racinaire

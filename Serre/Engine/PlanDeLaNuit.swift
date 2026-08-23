@@ -62,8 +62,7 @@ enum MoteurPlan {
     /// savoir ce qui se passe maintenant, pas ce soir.
     static func fenetreNocturne(pour date: Date,
                                 calendrier: Calendar) -> DateInterval {
-        var cal = calendrier
-        cal.timeZone = calendrier.timeZone
+        let cal = calendrier
         let heure = cal.component(.hour, from: date)
         let jourDeReference = heure < finNuit
             ? cal.date(byAdding: .day, value: -1, to: date) ?? date

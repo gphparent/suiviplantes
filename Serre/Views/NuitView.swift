@@ -70,11 +70,7 @@ struct NuitView: View {
                         Button {
                             montrerExplication = true
                         } label: {
-                            let ecart = String(format: "%.1f", minimum.ecart)
-                            Explication(texte: "\(ecart) degres de moins qu'annonce, "
-                                        + (minimum.nuitDeRayonnement
-                                           ? "parce que le ciel est degage et le vent faible."
-                                           : "au niveau du sol."),
+                            Explication(texte: Self.phraseDeLEcart(minimum),
                                         symbole: "thermometer.snowflake")
                         }
                         .buttonStyle(.plain)
@@ -95,6 +91,16 @@ struct NuitView: View {
         } header: {
             Text(intituleDeLaNuit)
         }
+    }
+
+    /// La phrase qui justifie l'ecart. Un chiffre qui contredit l'application
+    /// meteo du telephone doit se justifier, sinon il n'est pas cru.
+    static func phraseDeLEcart(_ minimum: MinimumNocturne) -> String {
+        let ecart = String(format: "%.1f", minimum.ecart)
+        let raison = minimum.nuitDeRayonnement
+            ? "parce que le ciel est degage et le vent faible."
+            : "au niveau du sol."
+        return "\(ecart) degres de moins qu'annonce, " + raison
     }
 
     private var intituleDeLaNuit: String {
