@@ -114,8 +114,8 @@ Serre/
 │               Espece + Catalogue · Reglages · ZoneRusticite · Lieu
 ├── Engine/     RefroidissementNocturne · MoteurGel · MoteurVent
 │               MoteurAcclimatation · MoteurArrosage · MoteurPlan · Saison
-├── Services/   AppModel · OpenMeteoService · LocationService
-│               NotificationService · Store
+├── Services/   AppModel · AppleWeatherService · OpenMeteoService
+│               LocationService · NotificationService · Store
 └── Views/      Nuit · Plantes · PlanteDetail · AjouterPlante
                 Arrosage · Reglages · Composants
 ```
@@ -129,11 +129,22 @@ SwiftUI.
 
 ## Données
 
-**Prévisions** — [Open-Meteo](https://open-meteo.com/), sans clé d'API. Six
-séries horaires : température, point de rosée, nébulosité, vent, rafales,
-précipitations. L'usage gratuit est réservé aux projets non commerciaux, ce qui
-convient à un usage familial ; une diffusion sur l'App Store demanderait un
-abonnement ou un basculement vers WeatherKit.
+**Prévisions** — **WeatherKit**, via `AppleWeatherService`. Six séries
+horaires : température, point de rosée, nébulosité, vent, rafales,
+précipitations. Les 500 000 appels mensuels inclus dans l'adhésion au programme
+développeur couvrent largement un usage familial comme une diffusion publique.
+
+`OpenMeteoService` reste dans le code derrière le même protocole
+`MeteoProviding`, et sert de repli hors App Store : son usage gratuit est
+réservé aux projets non commerciaux. Changer de source revient à passer une
+autre implémentation à `AppModel` — le moteur et ses tests ne bougent pas.
+
+Deux écarts entre les deux fournisseurs sont isolés dans
+`AppleWeatherService.Conversion`, parce que ce sont les seuls endroits où l'on
+peut réellement se tromper : WeatherKit exprime la nébulosité de 0 à 1 là où le
+moteur raisonne en pourcentage, et sa rafale est facultative — une heure sans
+rafale annoncée retombe sur le vent moyen, jamais sur zéro, qui ferait passer un
+coup de vent pour une nuit tranquille.
 
 **Zones de rusticité** — celles de Ressources naturelles Canada, de 2b à 5b pour
 le Québec.
@@ -148,6 +159,29 @@ son endurcissement, et restent modifiables plante par plante.
 ## Vie privée
 
 Tout reste sur l'appareil. Seules des coordonnées arrondies au centième de degré
-— environ un kilomètre — partent vers Open-Meteo pour aller chercher les
+— environ un kilomètre — partent vers le service météo pour aller chercher les
 prévisions. Aucun compte, aucun serveur, aucune synchronisation. Un lieu fixé à
 la main court-circuite entièrement la géolocalisation.
+
+Le manifeste `Serre/PrivacyInfo.xcprivacy` déclare la position comme collectée,
+non liée à une identité, sans suivi, au seul titre du fonctionnement de
+l'application.
+
+## Avant une mise en ligne
+
+Ce qui reste à faire, et qui demande des mains humaines :
+
+| | |
+|---|---|
+| **Icône** | `AppIcon.appiconset` ne contient qu'un gabarit. Apple exige un PNG 1024×1024 sans transparence. |
+| **Équipe et identifiant** | `DEVELOPMENT_TEAM` est vide, et `ca.gphparent.Serre` doit correspondre exactement à la fiche App Store Connect. |
+| **Politique de confidentialité** | Une URL publique est exigée dès qu'une application touche à la localisation. |
+| **Captures d'écran** | Aux formats demandés par App Store Connect. |
+| **Attribution** | Déjà en place dans les réglages : WeatherKit impose d'afficher la marque Apple Weather et de mener à la page des sources. Ne pas la retirer. |
+
+Un mot sur la responsabilité. Un modèle de gelée qui sous-avertit coûte, chez
+soi, une plante qu'on connaît. Publié, il coûte celles d'inconnus qui ont fait
+confiance à l'alerte. D'où les marges conservatrices par défaut, et
+l'avertissement que l'écran d'explication garde bien en vue : le modèle est un
+ordre de grandeur, et un thermomètre à minima posé près des pots reste le seul
+juge.

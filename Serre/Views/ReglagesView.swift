@@ -3,6 +3,7 @@ import SwiftUI
 struct ReglagesView: View {
 
     @Environment(AppModel.self) private var modele
+    @Environment(\.colorScheme) private var apparence
     @State private var latitudeSaisie = ""
     @State private var longitudeSaisie = ""
 
@@ -77,13 +78,41 @@ struct ReglagesView: View {
                     }
                 }
 
+                sectionAttribution
+
                 Section {
-                    Text("Serre garde tout sur l'appareil. Seules des coordonnees arrondies au kilometre partent vers Open-Meteo pour aller chercher les previsions. Aucun compte, aucun serveur, aucune synchronisation.")
+                    Text("Serre garde tout sur l'appareil. Seules des coordonnees arrondies au kilometre partent vers le service meteo pour aller chercher les previsions. Aucun compte, aucun serveur, aucune synchronisation.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Reglages")
+        }
+    }
+
+    /// Attribution d'Apple Weather. WeatherKit impose d'afficher la marque et
+    /// de mener a la page des sources de donnees : c'est une condition
+    /// d'utilisation du service, pas une politesse.
+    @ViewBuilder
+    private var sectionAttribution: some View {
+        Section {
+            if let marque = apparence == .dark
+                ? modele.attribution.marqueSombre
+                : modele.attribution.marqueClaire {
+                AsyncImage(url: marque) { image in
+                    image.resizable().scaledToFit().frame(height: 18)
+                } placeholder: {
+                    Text(modele.attribution.nomDuService ?? "Apple Weather")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if let page = modele.attribution.pageLegale {
+                Link("Sources des donnees meteo", destination: page)
+                    .font(.footnote)
+            }
+        } header: {
+            Text("Meteo")
         }
     }
 

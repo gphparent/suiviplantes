@@ -4,6 +4,7 @@ enum MeteoErreur: LocalizedError {
     case mauvaiseReponse(Int)
     case charieIllisible
     case seriesIncoherentes
+    case serieVide
 
     var errorDescription: String? {
         switch self {
@@ -13,12 +14,17 @@ enum MeteoErreur: LocalizedError {
             return "La reponse du service meteo est illisible."
         case .seriesIncoherentes:
             return "Les series de prevision ne concordent pas."
+        case .serieVide:
+            return "Le service meteo n'a renvoye aucune heure de prevision."
         }
     }
 }
 
 protocol MeteoProviding: Sendable {
-    func previsions(latitude: Double, longitude: Double) async throws -> Previsions
+    /// - Parameter fuseau: fuseau du lieu, quand l'appelant le connait deja.
+    ///   Les services qui le resolvent eux-memes l'ignorent.
+    func previsions(latitude: Double, longitude: Double,
+                    fuseau: TimeZone?) async throws -> Previsions
 }
 
 /// Acces aux previsions d'Open-Meteo.
@@ -44,7 +50,10 @@ struct OpenMeteoService: MeteoProviding {
         self.session = session
     }
 
-    func previsions(latitude: Double, longitude: Double) async throws -> Previsions {
+    /// Open-Meteo resout le fuseau lui-meme, et mieux que l'appelant : l'indice
+    /// est donc ignore.
+    func previsions(latitude: Double, longitude: Double,
+                    fuseau: TimeZone? = nil) async throws -> Previsions {
         var composants = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
         composants.queryItems = [
             URLQueryItem(name: "latitude", value: String(format: "%.4f", latitude)),

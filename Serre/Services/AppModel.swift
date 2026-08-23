@@ -30,13 +30,15 @@ final class AppModel {
 
     let localisation = LocationService()
     let notifications = NotificationService()
+    /// Attribution d'Apple Weather, que WeatherKit impose d'afficher.
+    let attribution = AttributionMeteo()
 
     // MARK: - Dependances
 
     private let store: Store
     private let meteo: any MeteoProviding
 
-    init(store: Store = Store(), meteo: any MeteoProviding = OpenMeteoService()) {
+    init(store: Store = Store(), meteo: any MeteoProviding = AppleWeatherService()) {
         self.store = store
         self.meteo = meteo
         self.reglages = store.charger(Reglages.self, pour: .reglages) ?? .defaut
@@ -50,6 +52,7 @@ final class AppModel {
 
     func demarrer() async {
         await notifications.rafraichirAutorisation()
+        await attribution.charger()
         await rafraichir()
     }
 
@@ -78,7 +81,8 @@ final class AppModel {
         do {
             let arrondi = lieu.arrondi
             let recues = try await meteo.previsions(latitude: arrondi.latitude,
-                                                    longitude: arrondi.longitude)
+                                                    longitude: arrondi.longitude,
+                                                    fuseau: lieu.fuseau)
             previsions = recues
             store.enregistrer(recues, pour: .dernieresPrevisions)
             derniereErreur = nil
