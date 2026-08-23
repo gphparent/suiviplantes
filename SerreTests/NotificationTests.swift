@@ -97,7 +97,7 @@ struct NotificationTests {
     @Test("Sans gel mais avec du vent, l'alerte parle du vent")
     func alerteVent() {
         let plante = Aide.plante(nom: "Bananier", confort: 5, critique: -5,
-                                 prise: .forte, exposition: .exposee)
+                                 exposition: .exposee, prise: .forte)
         let contenu = NotificationService.contenuDuSoir(
             plan: plan(plantes: [plante],
                        heures: Aide.nuit(du: jour, temperature: 20,

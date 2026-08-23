@@ -135,7 +135,7 @@ struct PlanDeLaNuitTests {
     func ventDesactive() {
         var reglages = Reglages.defaut
         reglages.alerterAuVent = false
-        let plante = Aide.plante(prise: .forte, exposition: .exposee)
+        let plante = Aide.plante(exposition: .exposee, prise: .forte)
         let heures = Aide.nuit(du: jour, temperature: 18, rafale: 90)
         #expect(plan(plantes: [plante], heures: heures).vent.isEmpty)
         #expect(!plan(plantes: [plante], heures: heures, reglages: .defaut).vent.isEmpty)

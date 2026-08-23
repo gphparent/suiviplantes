@@ -61,7 +61,7 @@ struct RisqueVentTests {
 
     @Test("Le geste propose suit la gravite")
     func gesteProposeSuitLaGravite() {
-        let plante = Aide.plante(prise: .forte, exposition: .exposee)
+        let plante = Aide.plante(exposition: .exposee, prise: .forte)
         let grave = evaluer(rafale: 90, plante: plante)
         #expect(grave?.niveau == .critique)
         #expect(grave?.geste.contains("rentrer") == true)
