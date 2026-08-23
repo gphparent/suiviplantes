@@ -1,0 +1,58 @@
+name: Compilation et tests
+
+# Les executeurs macOS de GitHub fournissent le Mac que le projet exige.
+# Gratuit sur un depot public ; sur un depot prive, les minutes macOS sont
+# decomptees au tarif x10 du quota mensuel. D'ou les economies ci-dessous,
+# et l'usage de `[skip ci]` dans un message de commit pour ne rien declencher.
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Simulateur iOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Choisir un simulateur
+        id: sim
+        run: |
+          # On prend le premier iPhone disponible plutot qu'un modele code en
+          # dur : le catalogue des images GitHub change a chaque mise a jour.
+          xcodebuild -version
+          NAME=$(xcrun simctl list devices available \
+                 | grep -oE 'iPhone [0-9]+[A-Za-z ]*' | head -1 | xargs)
+          echo "Simulateur retenu : $NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Compiler et tester
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Serre.xcodeproj \
+            -scheme Serre \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log
+
+      - name: Conserver les resultats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultats-tests
+          path: |
+            TestResults.xcresult
+            build.log
+          retention-days: 14
