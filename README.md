@@ -92,8 +92,8 @@ synchronisés avec le système de fichiers : ajouter un fichier Swift dans
 Deux réglages avant de lancer sur un appareil :
 
 1. **Équipe de signature** — `DEVELOPMENT_TEAM` est vide dans les deux cibles.
-2. **Identifiant de paquet** — `ca.gphparent.Serre`, à changer si vous n'êtes pas
-   le propriétaire de ce domaine.
+2. **Identifiant de paquet** — `ca.serre`, celui de la fiche App Store Connect.
+   Il ne se change plus une fois la fiche créée.
 
 Les tests :
 
@@ -174,7 +174,7 @@ Ce qui reste à faire, et qui demande des mains humaines :
 | | |
 |---|---|
 | **Icône** | `AppIcon.appiconset` ne contient qu'un gabarit. Apple exige un PNG 1024×1024 sans transparence. |
-| **Équipe et identifiant** | `DEVELOPMENT_TEAM` est vide, et `ca.gphparent.Serre` doit correspondre exactement à la fiche App Store Connect. |
+| **Équipe** | `DEVELOPMENT_TEAM` est vide. L'identifiant `ca.serre` correspond déjà à la fiche App Store Connect. |
 | **Politique de confidentialité** | Une URL publique est exigée dès qu'une application touche à la localisation. |
 | **Captures d'écran** | Aux formats demandés par App Store Connect. |
 | **Attribution** | Déjà en place dans les réglages : WeatherKit impose d'afficher la marque Apple Weather et de mener à la page des sources. Ne pas la retirer. |
