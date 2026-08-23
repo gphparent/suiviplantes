@@ -180,6 +180,36 @@ Le manifeste `Serre/PrivacyInfo.xcprivacy` déclare la position comme collectée
 non liée à une identité, sans suivi, au seul titre du fonctionnement de
 l'application.
 
+## Publier sans Mac
+
+La compilation, les tests et l'envoi vers TestFlight tournent tous sur les
+exécuteurs macOS de GitHub. Aucun Mac n'est nécessaire, et c'est la clé d'API
+App Store Connect qui remplace le passage habituel par le Trousseau macOS pour
+créer le certificat de distribution.
+
+**1. Créer la clé.** Sur [App Store Connect](https://appstoreconnect.apple.com) →
+*Utilisateurs et accès* → onglet *Intégrations* → *App Store Connect API* →
+*Clés de l'équipe* → **+**. Rôle **App Manager**, qui suffit pour téléverser.
+Le fichier `.p8` ne se télécharge **qu'une seule fois** — perdu, il faut le
+révoquer et recommencer. Notez au passage le *Key ID* et l'*Issuer ID* affiché
+en haut de la page.
+
+**2. Déposer quatre secrets** dans *Settings → Secrets and variables → Actions* :
+
+| Secret | Contenu |
+|---|---|
+| `ASC_KEY_ID` | Le *Key ID*, dix caractères |
+| `ASC_ISSUER_ID` | L'*Issuer ID*, un UUID |
+| `ASC_PRIVATE_KEY` | Le contenu entier du `.p8`, lignes `BEGIN`/`END` comprises |
+| `ASC_TEAM_ID` | Le *Team ID*, dix caractères, sous *Membership* du portail développeur |
+
+**3. Lancer** l'action *Envoi vers TestFlight*, onglet *Actions*, bouton *Run
+workflow*. Le numéro de build reprend le numéro d'exécution, ce qui garantit
+qu'il ne recule jamais — Apple refuse un build dont le numéro n'augmente pas.
+
+Ce workflow est **manuel exprès**. Le dépôt est public : un déclenchement par
+poussée exposerait la mécanique de signature à du code venu de l'extérieur.
+
 ## Avant une mise en ligne
 
 Ce qui reste à faire, et qui demande des mains humaines :

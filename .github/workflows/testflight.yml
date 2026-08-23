@@ -1,0 +1,144 @@
+name: Envoi vers TestFlight
+
+# Declenchement manuel uniquement.
+#
+# Ce n'est pas un detail : le depot est public, donc n'importe qui peut y
+# proposer une modification. Un workflow declenche par une poussee ou une
+# demande de tirage exposerait la mecanique de signature a du code venu de
+# l'exterieur. `workflow_dispatch` exige un droit d'ecriture sur le depot.
+#
+# GitHub ne transmet jamais les secrets aux workflows lances depuis une
+# bifurcation, mais s'appuyer sur cette garantie plutot que sur le declencheur
+# serait une precaution de moins pour rien.
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Note pour les testeurs (facultatif)"
+        required: false
+        type: string
+
+jobs:
+  televerser:
+    name: Archiver et envoyer
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verifier que les secrets sont en place
+        env:
+          CLE: ${{ secrets.ASC_PRIVATE_KEY }}
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
+        run: |
+          manquants=""
+          [ -n "$CLE" ]         || manquants="$manquants ASC_PRIVATE_KEY"
+          [ -n "$IDENTIFIANT" ] || manquants="$manquants ASC_KEY_ID"
+          [ -n "$EMETTEUR" ]    || manquants="$manquants ASC_ISSUER_ID"
+          [ -n "$EQUIPE" ]      || manquants="$manquants ASC_TEAM_ID"
+          if [ -n "$manquants" ]; then
+            echo "Secrets manquants :$manquants"
+            echo "A deposer dans Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "Les quatre secrets sont presents."
+
+      - name: Deposer la cle d'API
+        env:
+          CLE: ${{ secrets.ASC_PRIVATE_KEY }}
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          # `altool` cherche la cle a cet emplacement precis, sous ce nom precis.
+          mkdir -p ~/private_keys
+          printf '%s\n' "$CLE" > ~/private_keys/AuthKey_${IDENTIFIANT}.p8
+          chmod 600 ~/private_keys/AuthKey_${IDENTIFIANT}.p8
+
+      - name: Archiver
+        env:
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
+        run: |
+          set -o pipefail
+          # `-allowProvisioningUpdates` avec une cle d'API laisse Xcode creer
+          # lui-meme le certificat de distribution et le profil. C'est ce qui
+          # remplace le passage par le Trousseau d'un Mac.
+          xcodebuild archive \
+            -project Serre.xcodeproj \
+            -scheme Serre \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Serre.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${IDENTIFIANT}.p8 \
+            -authenticationKeyID "$IDENTIFIANT" \
+            -authenticationKeyIssuerID "$EMETTEUR" \
+            DEVELOPMENT_TEAM="$EQUIPE" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | tee archive.log
+
+      - name: Preparer les options d'export
+        env:
+          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
+        run: |
+          cat > ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>${EQUIPE}</string>
+            <key>uploadSymbols</key><true/>
+            <key>signingStyle</key><string>automatic</string>
+            <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Exporter l'archive
+        env:
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/Serre.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${IDENTIFIANT}.p8 \
+            -authenticationKeyID "$IDENTIFIANT" \
+            -authenticationKeyIssuerID "$EMETTEUR" \
+            | tee export.log
+          ls -la build/export
+
+      - name: Envoyer vers App Store Connect
+        env:
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          IPA=$(find build/export -name '*.ipa' | head -1)
+          test -n "$IPA" || { echo "Aucun .ipa produit"; exit 1; }
+          echo "Envoi de $IPA"
+          # Validation d'abord : elle attrape la plupart des refus avant
+          # l'envoi, et coute quelques secondes.
+          xcrun altool --validate-app -f "$IPA" -t ios \
+            --apiKey "$IDENTIFIANT" --apiIssuer "$EMETTEUR"
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$IDENTIFIANT" --apiIssuer "$EMETTEUR"
+
+      - name: Effacer la cle
+        if: always()
+        run: rm -rf ~/private_keys
+
+      - name: Conserver les journaux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journaux-envoi
+          path: |
+            archive.log
+            export.log
+          retention-days: 14
