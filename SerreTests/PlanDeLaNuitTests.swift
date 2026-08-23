@@ -137,7 +137,7 @@ struct PlanDeLaNuitTests {
         reglages.alerterAuVent = false
         let plante = Aide.plante(exposition: .exposee, prise: .forte)
         let heures = Aide.nuit(du: jour, temperature: 18, rafale: 90)
-        #expect(plan(plantes: [plante], heures: heures).vent.isEmpty)
+        #expect(plan(plantes: [plante], heures: heures, reglages: reglages).vent.isEmpty)
         #expect(!plan(plantes: [plante], heures: heures, reglages: .defaut).vent.isEmpty)
     }
 
