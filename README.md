@@ -189,7 +189,11 @@ créer le certificat de distribution.
 
 **1. Créer la clé.** Sur [App Store Connect](https://appstoreconnect.apple.com) →
 *Utilisateurs et accès* → onglet *Intégrations* → *App Store Connect API* →
-*Clés de l'équipe* → **+**. Rôle **App Manager**, qui suffit pour téléverser.
+*Clés de l'équipe* → **+**. Rôle **Admin** — et non App Manager. C'est contre-intuitif pour une clé qui vit
+dans un système d'intégration continue, mais Apple n'offre aucun réglage pour
+accorder l'accès aux certificats de distribution infonuagiques à une clé de rang
+inférieur : l'archivage réussit, puis l'export échoue sur *Cloud signing
+permission error*. Le rôle se fixe à la création et ne se modifie pas ensuite.
 Le fichier `.p8` ne se télécharge **qu'une seule fois** — perdu, il faut le
 révoquer et recommencer. Notez au passage le *Key ID* et l'*Issuer ID* affiché
 en haut de la page.

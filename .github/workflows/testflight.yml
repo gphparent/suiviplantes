@@ -42,6 +42,10 @@ jobs:
             echo "Secrets manquants :$manquants"
             echo "A deposer dans Settings > Secrets and variables > Actions."
             echo
+            echo "La cle d'API doit avoir le role Admin : l'export de'"'"'une"
+            echo "archive de distribution l'exige, et App Manager echoue sur"
+            echo "« Cloud signing permission error »."
+            echo
             echo "ASC_TEAM_ID est le Team ID, dix caracteres majuscules."
             echo "Il ne vient pas de la meme page que la cle d'API :"
             echo "  developer.apple.com/account > Membership details > Team ID"
@@ -104,6 +108,11 @@ jobs:
           </plist>
           PLIST
 
+      # L'export est l'etape qui exige la signature de distribution, et donc
+      # une cle d'API au role Admin. Un role Developer ou App Manager echoue
+      # ici sur « Cloud signing permission error », alors meme que l'archivage
+      # a reussi : Apple n'offre aucun reglage pour accorder l'acces aux
+      # certificats de distribution infonuagiques a une cle non-Admin.
       - name: Exporter l'archive
         env:
           IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
