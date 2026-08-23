@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    Entitlements de Serre.
+
+    Ce fichier n'est PAS reference par les reglages de build : `CODE_SIGN_ENTITLEMENTS`
+    est volontairement vide, pour que le projet se compile et s'execute sans
+    aucune configuration prealable cote portail developpeur.
+
+    Pour passer a WeatherKit, dans cet ordre :
+
+      1. Portail developpeur, Certificates Identifiers & Profiles, Identifiers,
+         `ca.serre` : cocher la capacite WeatherKit, puis regenerer le profil.
+      2. Xcode, cible Serre, Signing & Capabilities : ajouter WeatherKit, ce qui
+         reference ce fichier automatiquement.
+      3. `AppModel.init` : remplacer `OpenMeteoService()` par
+         `AppleWeatherService()`.
+
+    Sauter la premiere etape fait echouer la signature, et Xcode l'affiche comme
+    un echec de compilation, ce qui egare.
+-->
 <plist version="1.0">
 <dict>
 	<key>com.apple.developer.weatherkit</key>

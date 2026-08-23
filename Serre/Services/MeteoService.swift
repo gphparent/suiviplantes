@@ -21,6 +21,11 @@ enum MeteoErreur: LocalizedError {
 }
 
 protocol MeteoProviding: Sendable {
+    /// Nom du service, affiche dans les reglages. Crediter sa source n'est pas
+    /// une politesse : c'est une condition d'utilisation, chez Apple comme chez
+    /// Open-Meteo.
+    var nomDuService: String { get }
+
     /// - Parameter fuseau: fuseau du lieu, quand l'appelant le connait deja.
     ///   Les services qui le resolvent eux-memes l'ignorent.
     func previsions(latitude: Double, longitude: Double,
@@ -38,6 +43,8 @@ protocol MeteoProviding: Sendable {
 /// pour son ampleur, rafales pour le renversement des pots, precipitations pour
 /// l'arrosage.
 struct OpenMeteoService: MeteoProviding {
+
+    let nomDuService = "Open-Meteo"
 
     /// Trois jours de passe pour l'arrosage, sept de prevision pour planifier
     /// une rentree d'automne.

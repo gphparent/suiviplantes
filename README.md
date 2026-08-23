@@ -129,15 +129,26 @@ SwiftUI.
 
 ## Données
 
-**Prévisions** — **WeatherKit**, via `AppleWeatherService`. Six séries
-horaires : température, point de rosée, nébulosité, vent, rafales,
-précipitations. Les 500 000 appels mensuels inclus dans l'adhésion au programme
-développeur couvrent largement un usage familial comme une diffusion publique.
+**Prévisions** — deux implémentations du même protocole `MeteoProviding`, et le
+moteur ne sait pas laquelle il consomme.
 
-`OpenMeteoService` reste dans le code derrière le même protocole
-`MeteoProviding`, et sert de repli hors App Store : son usage gratuit est
-réservé aux projets non commerciaux. Changer de source revient à passer une
-autre implémentation à `AppModel` — le moteur et ses tests ne bougent pas.
+`OpenMeteoService` est la source **par défaut**. Aucune clé, aucune capacité à
+activer, aucune équipe de signature : le projet se compile et s'exécute tel
+quel, dès le premier clonage. Son usage gratuit est réservé aux projets non
+commerciaux, ce qui convient parfaitement à un usage familial.
+
+`AppleWeatherService` est la source **pour une diffusion publique**, puisque
+l'App Store sort du cadre non commercial d'Open-Meteo. Les 500 000 appels
+mensuels sont inclus dans l'adhésion au programme développeur que la publication
+exige de toute façon. Le passage se fait en trois étapes, dans l'ordre, et elles
+sont détaillées en tête de `Serre.entitlements` : activer la capacité WeatherKit
+pour `ca.serre` dans le portail développeur, l'ajouter dans *Signing &
+Capabilities*, puis remplacer `OpenMeteoService()` par `AppleWeatherService()`
+dans `AppModel.init`.
+
+Sauter la première étape fait échouer la signature — et Xcode l'affiche comme un
+échec de compilation, ce qui égare. C'est pourquoi l'entitlement n'est pas câblé
+dans les réglages de build par défaut.
 
 Deux écarts entre les deux fournisseurs sont isolés dans
 `AppleWeatherService.Conversion`, parce que ce sont les seuls endroits où l'on
@@ -177,7 +188,8 @@ Ce qui reste à faire, et qui demande des mains humaines :
 | **Équipe** | `DEVELOPMENT_TEAM` est vide. L'identifiant `ca.serre` correspond déjà à la fiche App Store Connect. |
 | **Politique de confidentialité** | Une URL publique est exigée dès qu'une application touche à la localisation. |
 | **Captures d'écran** | Aux formats demandés par App Store Connect. |
-| **Attribution** | Déjà en place dans les réglages : WeatherKit impose d'afficher la marque Apple Weather et de mener à la page des sources. Ne pas la retirer. |
+| **WeatherKit** | Activer la capacité pour `ca.serre` dans le portail, puis basculer `AppModel` sur `AppleWeatherService` — voir `Serre.entitlements`. |
+| **Attribution** | Déjà en place dans les réglages, et adaptée au fournisseur en usage. WeatherKit impose la marque Apple Weather et le lien vers les sources. Ne pas la retirer. |
 
 Un mot sur la responsabilité. Un modèle de gelée qui sous-avertit coûte, chez
 soi, une plante qu'on connaît. Publié, il coûte celles d'inconnus qui ont fait

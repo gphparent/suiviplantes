@@ -38,7 +38,7 @@ final class AppModel {
     private let store: Store
     private let meteo: any MeteoProviding
 
-    init(store: Store = Store(), meteo: any MeteoProviding = AppleWeatherService()) {
+    init(store: Store = Store(), meteo: any MeteoProviding = OpenMeteoService()) {
         self.store = store
         self.meteo = meteo
         self.reglages = store.charger(Reglages.self, pour: .reglages) ?? .defaut
@@ -50,9 +50,16 @@ final class AppModel {
 
     // MARK: - Cycle de vie
 
+    /// Nom du service meteo en usage, pour le crediter dans les reglages.
+    var sourceMeteo: String { meteo.nomDuService }
+
     func demarrer() async {
         await notifications.rafraichirAutorisation()
-        await attribution.charger()
+        // L'attribution d'Apple ne se charge que si WeatherKit sert reellement :
+        // sans l'entitlement, l'appel echoue en silence et n'apprend rien.
+        if meteo is AppleWeatherService {
+            await attribution.charger()
+        }
         await rafraichir()
     }
 

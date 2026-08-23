@@ -90,9 +90,12 @@ struct ReglagesView: View {
         }
     }
 
-    /// Attribution d'Apple Weather. WeatherKit impose d'afficher la marque et
-    /// de mener a la page des sources de donnees : c'est une condition
-    /// d'utilisation du service, pas une politesse.
+    /// Credit de la source meteo.
+    ///
+    /// Avec WeatherKit, afficher la marque Apple Weather et mener a la page des
+    /// sources est une condition d'utilisation du service, pas une politesse.
+    /// Avec Open-Meteo, le credit est plus simple mais reste du. La section
+    /// s'adapte au fournisseur reellement en usage.
     @ViewBuilder
     private var sectionAttribution: some View {
         Section {
@@ -102,13 +105,19 @@ struct ReglagesView: View {
                 AsyncImage(url: marque) { image in
                     image.resizable().scaledToFit().frame(height: 18)
                 } placeholder: {
-                    Text(modele.attribution.nomDuService ?? "Apple Weather")
+                    Text(modele.attribution.nomDuService ?? modele.sourceMeteo)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+            } else {
+                LabeledContent("Source", value: modele.sourceMeteo)
             }
+
             if let page = modele.attribution.pageLegale {
                 Link("Sources des donnees meteo", destination: page)
+                    .font(.footnote)
+            } else if let openMeteo = URL(string: "https://open-meteo.com/") {
+                Link("open-meteo.com", destination: openMeteo)
                     .font(.footnote)
             }
         } header: {

@@ -22,6 +22,8 @@ import WeatherKit
 /// la section correspondante des reglages.
 struct AppleWeatherService: MeteoProviding {
 
+    let nomDuService = "Apple Weather"
+
     /// Trois jours de passe pour l'arrosage, sept de prevision pour planifier
     /// une rentree d'automne.
     static let joursPasses = 3
