@@ -85,7 +85,9 @@ réglages — précisément pour qu'on puisse comparer.
 open Serre.xcodeproj
 ```
 
-Xcode 16 ou plus récent, iOS 18 minimum. Le projet utilise des groupes
+Xcode 16 ou plus récent, iOS 18 minimum. **Sans Mac**, la compilation et les
+tests tournent de toute façon sur les exécuteurs macOS de GitHub à chaque
+poussée — voir `.github/workflows/build.yml`. Le projet utilise des groupes
 synchronisés avec le système de fichiers : ajouter un fichier Swift dans
 `Serre/` suffit, il n'y a pas de liste de sources à tenir à jour.
 
@@ -184,7 +186,7 @@ Ce qui reste à faire, et qui demande des mains humaines :
 
 | | |
 |---|---|
-| **Icône** | `AppIcon.appiconset` ne contient qu'un gabarit. Apple exige un PNG 1024×1024 sans transparence. |
+| **Icône** | Faite. `Tools/fabriquer-icone.py` la trace pixel par pixel, sans bibliothèque de dessin : une feuille prise par le givre sous un ciel dégagé et une lune haute — les conditions mêmes du refroidissement par rayonnement. |
 | **Équipe** | `DEVELOPMENT_TEAM` est vide. L'identifiant `ca.serre` correspond déjà à la fiche App Store Connect. |
 | **Politique de confidentialité** | Une URL publique est exigée dès qu'une application touche à la localisation. |
 | **Captures d'écran** | Aux formats demandés par App Store Connect. |
