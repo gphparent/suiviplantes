@@ -31,19 +31,19 @@ jobs:
           CLE: ${{ secrets.ASC_PRIVATE_KEY }}
           IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
           EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
-          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
         run: |
           manquants=""
           [ -n "$CLE" ]         || manquants="$manquants ASC_PRIVATE_KEY"
           [ -n "$IDENTIFIANT" ] || manquants="$manquants ASC_KEY_ID"
           [ -n "$EMETTEUR" ]    || manquants="$manquants ASC_ISSUER_ID"
-          [ -n "$EQUIPE" ]      || manquants="$manquants ASC_TEAM_ID"
           if [ -n "$manquants" ]; then
             echo "Secrets manquants :$manquants"
             echo "A deposer dans Settings > Secrets and variables > Actions."
             exit 1
           fi
-          echo "Les quatre secrets sont presents."
+          echo "Les trois secrets indispensables sont presents."
+          # Le quatrieme, ASC_TEAM_ID, est facultatif : l'etape suivante sait le
+          # demander a Apple quand il n'est pas fourni.
 
       - name: Deposer la cle d'API
         env:
@@ -55,11 +55,62 @@ jobs:
           printf '%s\n' "$CLE" > ~/private_keys/AuthKey_${IDENTIFIANT}.p8
           chmod 600 ~/private_keys/AuthKey_${IDENTIFIANT}.p8
 
+      - name: Determiner l'equipe
+        id: equipe
+        env:
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+          FOURNI: ${{ secrets.ASC_TEAM_ID }}
+        run: |
+          if [ -n "$FOURNI" ]; then
+            echo "Team ID fourni par le secret ASC_TEAM_ID."
+            echo "id=$FOURNI" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Le Team ID ne se trouve pas sur la meme page que la cle, et il
+          # s'oublie. Plutot que d'echouer, on le demande a Apple : la cle
+          # d'API donne acces a la liste des equipes auxquelles elle est
+          # rattachee, et le nom court d'une equipe est son Team ID.
+          echo "ASC_TEAM_ID absent : recherche aupres d'Apple."
+          xcrun altool --list-providers             --apiKey "$IDENTIFIANT" --apiIssuer "$EMETTEUR"             --output-format json > equipes.json || {
+              echo "La consultation a echoue. Verifiez la cle, ou fournissez"
+              echo "ASC_TEAM_ID : developer.apple.com/account, Membership details."
+              exit 1
+            }
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, re, sys
+          donnees = json.load(open('equipes.json'))
+          equipes = donnees.get('providers') or donnees.get('Providers') or []
+          # Un Team ID fait dix caracteres alphanumeriques majuscules.
+          motif = re.compile(r'^[A-Z0-9]{10}$')
+          trouves = []
+          for e in equipes:
+              for cle in ('ProviderShortname', 'providerShortname', 'ShortName'):
+                  valeur = e.get(cle)
+                  if valeur and motif.match(str(valeur)):
+                      trouves.append((str(valeur), e.get('ProviderName') or e.get('providerName') or '?'))
+                      break
+          if len(trouves) == 1:
+              print(f"id={trouves[0][0]}")
+              print(f"Equipe retenue : {trouves[0][1]} ({trouves[0][0]})", file=sys.stderr)
+          elif not trouves:
+              print("La cle n'est rattachee a aucune equipe exploitable.", file=sys.stderr)
+              print("Deposez ASC_TEAM_ID : developer.apple.com/account,", file=sys.stderr)
+              print("section Membership details, ligne Team ID.", file=sys.stderr)
+              sys.exit(1)
+          else:
+              print("Plusieurs equipes, impossible de choisir seul :", file=sys.stderr)
+              for ident, nom in trouves:
+                  print(f"  {ident}  {nom}", file=sys.stderr)
+              print("Deposez ASC_TEAM_ID avec celle qui porte l'app.", file=sys.stderr)
+              sys.exit(1)
+          PY
+
       - name: Archiver
         env:
           IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
           EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
-          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
+          EQUIPE: ${{ steps.equipe.outputs.id }}
         run: |
           set -o pipefail
           # `-allowProvisioningUpdates` avec une cle d'API laisse Xcode creer
@@ -80,7 +131,7 @@ jobs:
 
       - name: Preparer les options d'export
         env:
-          EQUIPE: ${{ secrets.ASC_TEAM_ID }}
+          EQUIPE: ${{ steps.equipe.outputs.id }}
         run: |
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -141,4 +192,5 @@ jobs:
           path: |
             archive.log
             export.log
+            equipes.json
           retention-days: 14

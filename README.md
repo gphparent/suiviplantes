@@ -194,14 +194,14 @@ Le fichier `.p8` ne se télécharge **qu'une seule fois** — perdu, il faut le
 révoquer et recommencer. Notez au passage le *Key ID* et l'*Issuer ID* affiché
 en haut de la page.
 
-**2. Déposer quatre secrets** dans *Settings → Secrets and variables → Actions* :
+**2. Déposer trois secrets** — un quatrième est facultatif — dans *Settings → Secrets and variables → Actions* :
 
 | Secret | Contenu |
 |---|---|
 | `ASC_KEY_ID` | Le *Key ID*, dix caractères |
 | `ASC_ISSUER_ID` | L'*Issuer ID*, un UUID |
 | `ASC_PRIVATE_KEY` | Le contenu entier du `.p8`, lignes `BEGIN`/`END` comprises |
-| `ASC_TEAM_ID` | Le *Team ID*, dix caractères, sous *Membership* du portail développeur |
+| `ASC_TEAM_ID` | **Facultatif.** Le *Team ID*, dix caractères, sous *Membership details* du portail développeur. Sans lui, le workflow le demande à Apple, et ne réclame le secret que si la clé est rattachée à plusieurs équipes. |
 
 **3. Lancer** l'action *Envoi vers TestFlight*, onglet *Actions*, bouton *Run
 workflow*. Le numéro de build reprend le numéro d'exécution, ce qui garantit
