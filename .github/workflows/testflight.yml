@@ -61,11 +61,54 @@ jobs:
         env:
           CLE: ${{ secrets.ASC_PRIVATE_KEY }}
           IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           # `altool` cherche la cle a cet emplacement precis, sous ce nom precis.
           mkdir -p ~/private_keys
-          printf '%s\n' "$CLE" > ~/private_keys/AuthKey_${IDENTIFIANT}.p8
-          chmod 600 ~/private_keys/AuthKey_${IDENTIFIANT}.p8
+          FICHIER=~/private_keys/AuthKey_${IDENTIFIANT}.p8
+          printf '%s\n' "$CLE" > "$FICHIER"
+          chmod 600 "$FICHIER"
+
+          # Verification de forme, sans jamais afficher la cle. Un refus 401 au
+          # milieu de l'archivage ne dit pas laquelle des trois valeurs est en
+          # cause ; ces controles-ci le disent en une seconde.
+          souci=0
+
+          if ! head -1 "$FICHIER" | grep -q 'BEGIN PRIVATE KEY'; then
+            echo "ASC_PRIVATE_KEY ne commence pas par -----BEGIN PRIVATE KEY-----"
+            echo "  Le contenu du .p8 doit etre colle en entier, ces lignes comprises."
+            souci=1
+          fi
+          if ! tail -2 "$FICHIER" | grep -q 'END PRIVATE KEY'; then
+            echo "ASC_PRIVATE_KEY ne finit pas par -----END PRIVATE KEY-----"
+            souci=1
+          fi
+          if [ "$(wc -l < "$FICHIER")" -lt 3 ]; then
+            echo "ASC_PRIVATE_KEY tient sur moins de trois lignes :"
+            echo "  les retours de ligne du fichier ont ete perdus au collage."
+            souci=1
+          fi
+          if openssl pkey -in "$FICHIER" -noout 2>/dev/null; then
+            echo "Cle privee lisible et bien formee."
+          else
+            echo "La cle privee est illisible par openssl : contenu tronque ou altere."
+            souci=1
+          fi
+
+          # Les identifiants ne sont jamais affiches, seulement mesures.
+          longueur_id=${#IDENTIFIANT}
+          longueur_em=${#EMETTEUR}
+          echo "ASC_KEY_ID : $longueur_id caracteres (attendu 10)"
+          echo "ASC_ISSUER_ID : $longueur_em caracteres (attendu 36, un UUID)"
+          [ "$longueur_id" -eq 10 ] || { echo "  Longueur inattendue."; souci=1; }
+          [ "$longueur_em" -eq 36 ] || { echo "  Longueur inattendue."; souci=1; }
+
+          if [ "$souci" -ne 0 ]; then
+            echo
+            echo "Corrigez le ou les secrets signales avant de relancer :"
+            echo "un refus 401 d'Apple vient presque toujours de la."
+            exit 1
+          fi
 
       - name: Archiver
         env:
