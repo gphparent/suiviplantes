@@ -42,7 +42,7 @@ jobs:
             echo "Secrets manquants :$manquants"
             echo "A deposer dans Settings > Secrets and variables > Actions."
             echo
-            echo "La cle d'API doit avoir le role Admin : l'export de'"'"'une"
+            echo "La cle d'API doit avoir le role Admin : l'export d'une"
             echo "archive de distribution l'exige, et App Manager echoue sur"
             echo "« Cloud signing permission error »."
             echo
