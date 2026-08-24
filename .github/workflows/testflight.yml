@@ -110,6 +110,18 @@ jobs:
             exit 1
           fi
 
+      - name: Eprouver les identifiants aupres d'Apple
+        env:
+          IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
+          EMETTEUR: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          # Xcode signale un refus 401 au milieu de l'archivage, sans dire
+          # laquelle des trois valeurs est en cause. Un appel direct le dit en
+          # une seconde, et confirme au passage que la fiche est visible.
+          python3 Tools/tester-cle-asc.py \
+            ~/private_keys/AuthKey_${IDENTIFIANT}.p8 \
+            "$IDENTIFIANT" "$EMETTEUR" ca.serre
+
       - name: Archiver
         env:
           IDENTIFIANT: ${{ secrets.ASC_KEY_ID }}
