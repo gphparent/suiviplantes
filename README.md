@@ -211,6 +211,12 @@ en haut de la page.
 workflow*. Le numéro de build reprend le numéro d'exécution, ce qui garantit
 qu'il ne recule jamais — Apple refuse un build dont le numéro n'augmente pas.
 
+Le workflow reprend la recette éprouvée du dépôt `vitamine-d`, du même auteur :
+l'archivage tente la signature et se rabat sans elle si le compte n'a aucun
+appareil enregistré, et l'envoi se fait par `xcodebuild -exportArchive` avec
+`destination: upload`, sans outil tiers. `ASC_TEAM_ID` et `APPLE_TEAM_ID` sont
+tous deux acceptés, pour qu'une même clé serve aux deux projets sans renommage.
+
 Ce workflow est **manuel exprès**. Le dépôt est public : un déclenchement par
 poussée exposerait la mécanique de signature à du code venu de l'extérieur.
 
