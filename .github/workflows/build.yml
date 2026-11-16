@@ -40,8 +40,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test \
-            -project Serre.xcodeproj \
-            -scheme Serre \
+            -project AppliYouTube.xcodeproj \
+            -scheme AppliYouTube \
             -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \

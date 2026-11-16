@@ -35,7 +35,7 @@ jobs:
             echo "A deposer dans Settings > Secrets and variables > Actions."
             echo
             echo "Le plus simple est de reprendre exactement les valeurs qui"
-            echo "servent deja au depot vitamine-d : elles sont eprouvees."
+            echo "servent deja au depot Vitamine-D : elles sont eprouvees."
             exit 1
           fi
           echo "Les quatre secrets sont presents."
@@ -71,7 +71,7 @@ jobs:
           # une seconde, et confirme que la fiche est visible par la cle.
           python3 Tools/tester-cle-asc.py \
             "$RUNNER_TEMP/private_keys/AuthKey_$ASC_KEY_ID.p8" \
-            "$ASC_KEY_ID" "$ASC_ISSUER_ID" ca.serre
+            "$ASC_KEY_ID" "$ASC_ISSUER_ID" ca.appliyoutube
 
       - name: Archiver, signe si possible
         run: |
@@ -81,19 +81,17 @@ jobs:
           # enregistre dans le compte developpeur. Sans appareil, Apple refuse
           # de generer un profil de developpement et la signature echoue.
           #
-          # Le repli sans signature est ici sans consequence : Serre ne declare
-          # aucun droit particulier. Ce serait different si WeatherKit etait
-          # active — l'archive non signee n'aurait alors aucun droit a
-          # transmettre a l'export.
+          # Le repli sans signature est ici sans consequence : l'appli ne
+          # declare aucun droit particulier (ni WeatherKit, ni notifications).
           #
           # Le numero de version interne doit croitre a chaque televersement,
           # sans quoi Apple refuse le paquet comme doublon.
           commun=(
-            -project Serre.xcodeproj
-            -scheme Serre
+            -project AppliYouTube.xcodeproj
+            -scheme AppliYouTube
             -configuration Release
             -destination 'generic/platform=iOS'
-            -archivePath "$RUNNER_TEMP/Serre.xcarchive"
+            -archivePath "$RUNNER_TEMP/AppliYouTube.xcarchive"
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
           )
@@ -110,7 +108,7 @@ jobs:
             echo "::warning::aucun appareil enregistre dans le compte."
             echo "::warning::Repli sans signature. Sans droits declares, la"
             echo "::warning::version reste complete."
-            rm -rf "$RUNNER_TEMP/Serre.xcarchive"
+            rm -rf "$RUNNER_TEMP/AppliYouTube.xcarchive"
             xcodebuild archive "${commun[@]}" \
               CODE_SIGNING_ALLOWED=NO \
               CODE_SIGNING_REQUIRED=NO \
@@ -140,7 +138,7 @@ jobs:
           PLIST
 
           xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/Serre.xcarchive" \
+            -archivePath "$RUNNER_TEMP/AppliYouTube.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -allowProvisioningUpdates \
