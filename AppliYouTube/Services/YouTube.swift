@@ -189,7 +189,9 @@ private final class LecteurFlux: NSObject, XMLParserDelegate {
         texte = ""
         switch element {
         case "entry": dansEntree = true; id = ""; titre = ""; chaine = ""; publiee = ""
-        case "author": dansAuteur = true
+        // L'auteur de la chaine figure aussi en tete du flux, hors de toute
+        // entree : il ne doit pas armer le drapeau.
+        case "author" where dansEntree: dansAuteur = true
         default: break
         }
     }
